@@ -293,29 +293,6 @@ public:
         }
         return res ;
     }
-    polynomial add( polynomial& poly2 ){
-        polynomial res ;
-        int sz1 = list.size , sz2 = poly2.getSize() ;
-        int small = min( sz1 , sz2 ) , big = max( sz1 , sz2 ) ;
-        Node* ptr1 = list.head , *ptr2 = poly2.list.head ;
-        while( small-- ){
-            res.add( ptr1->value + ptr2->value ) ;
-            ptr1 = ptr1->next ;
-            ptr2 = ptr2->next ;
-        }
-        if( sz1 == big ){
-            while( ptr1 ){
-            res.add( ptr1->value ) ;
-            ptr1 = ptr1->next ;
-            }
-        } else{
-            while( ptr2 ){
-            res.add( ptr2->value ) ;
-            ptr2 = ptr2->next ;
-        }
-    }
-        return res ;
-    }
     polynomial sub( polynomial& poly2 ){
         polynomial res ;
         int sz1 = list.size , sz2 = poly2.getSize() ;
@@ -394,13 +371,49 @@ public:
     float evaluatePolynomial(char poly, float value){
         return mypolynomials[poly].evaluate(value) ;
     }
-    polynomial add(char poly1, char poly2){
-        mypolynomials['R'] = mypolynomials[poly1].add( mypolynomials[poly2]) ;
-        return mypolynomials['R'] ;
+    void add(char poly1, char poly2){
+        int sz1 = mypolynomials[poly1].getSize() , sz2 = mypolynomials[poly2].getSize() ;
+        int small = min( sz1 , sz2 ) , big = max( sz1 , sz2 ) ;
+        mypolynomials['R'].clear() ;
+        Node* ptr1 = mypolynomials[poly1].list.head , *ptr2 = mypolynomials[poly2].list.head ;
+        while( small-- ){
+            mypolynomials['R'].add( ptr1->value + ptr2->value ) ;
+            ptr1 = ptr1->next ;
+            ptr2 = ptr2->next ;
+        }
+        if( sz1 == big ){
+            while( ptr1 ){
+            mypolynomials['R'].add( ptr1->value ) ;
+            ptr1 = ptr1->next ;
+            }
+        } else{
+            while( ptr2 ){
+            mypolynomials['R'].add( ptr2->value ) ;
+            ptr2 = ptr2->next ;
+        }
+    }
     }
     polynomial subtract(char poly1, char poly2){
-        mypolynomials['R'] = mypolynomials[poly1].sub( mypolynomials[poly2]) ;
-        return mypolynomials['R'] ;
+    int sz1 = mypolynomials[poly1].getSize() , sz2 = mypolynomials[poly2].getSize() ;
+        int small = min( sz1 , sz2 ) , big = max( sz1 , sz2 ) ;
+        mypolynomials['R'].clear() ;
+        Node* ptr1 = mypolynomials[poly1].list.head , *ptr2 = mypolynomials[poly2].list.head ;
+        while( small-- ){
+            mypolynomials['R'].add( ptr1->value - ptr2->value ) ;
+            ptr1 = ptr1->next ;
+            ptr2 = ptr2->next ;
+        }
+        if( sz1 == big ){
+            while( ptr1 ){
+            mypolynomials['R'].add( ptr1->value ) ;
+            ptr1 = ptr1->next ;
+            }
+        } else{
+            while( ptr2 ){
+            mypolynomials['R'].add( -ptr2->value ) ;
+            ptr2 = ptr2->next ;
+            }
+        }
     }
 };
 
@@ -432,10 +445,9 @@ void control_command( string operation , PloynomialSolver& pol1 ){
     } 
     else if (operation == "add") {
         char poly1 , poly2 ;
-        cin >> poly1 ;
-        cin >> poly2 ;
-        cout << poly1 << " " << poly2 ;
-        cout << pol1.add(poly1 , poly2).printPoly() << "\n" ;
+        cin >> poly1 >> poly2 ;
+        pol1.add(poly1 , poly2);
+        cout << pol1.print('R') << "\n" ;
     } 
     else if (operation == "sub") {
         char poly1 , poly2 ;
@@ -455,5 +467,4 @@ PloynomialSolver pol1 ;
 string command;
 while(cin >> command)
     control_command( command , pol1 );
-
 }
