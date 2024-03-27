@@ -393,7 +393,7 @@ public:
         }
     }
     }
-    polynomial subtract(char poly1, char poly2){
+    void subtract(char poly1, char poly2){
     int sz1 = mypolynomials[poly1].getSize() , sz2 = mypolynomials[poly2].getSize() ;
         int small = min( sz1 , sz2 ) , big = max( sz1 , sz2 ) ;
         mypolynomials['R'].clear() ;
@@ -415,6 +415,33 @@ public:
             }
         }
     }
+    void multiply(char poly1, char poly2) {
+        
+        mypolynomials['R'].clear();
+        map<int, int> resultTerms;
+        Node* ptr1 = mypolynomials[poly1].list.head;
+        Node* ptr2;
+        int exp1 = 0, exp2 = 0;
+
+        while (ptr1) {
+            ptr2 = mypolynomials[poly2].list.head;
+            exp2 = 0;
+            while (ptr2) {
+                int newCoeff = ptr1->value * ptr2->value;
+                int newExp = exp1 + exp2;
+                resultTerms[newExp] += newCoeff;
+                ptr2 = ptr2->next;
+                exp2++;
+            }
+            ptr1 = ptr1->next;
+            exp1++;
+        }
+
+        for (auto it = resultTerms.begin(); it != resultTerms.end(); ++it) {
+            mypolynomials['R'].add(it->second);
+        }
+    }
+
 };
 
 void control_command( string operation , PloynomialSolver& pol1 ){
@@ -451,11 +478,15 @@ void control_command( string operation , PloynomialSolver& pol1 ){
     } 
     else if (operation == "sub") {
         char poly1 , poly2 ;
-        cin >> poly1 ;
-        cin >> poly2 ;
-        cout << pol1.subtract(poly1 , poly2).printPoly() << "\n" ;
+        cin >> poly1 >> poly2 ;
+        pol1.subtract(poly1,poly2);
+        cout << pol1.print('R') << "\n" ;
     } 
     else if (operation == "mult") {
+        char poly1 , poly2 ;
+        cin >> poly1 >> poly2 ;
+        pol1.multiply(poly1,poly2);
+        cout << pol1.print('R') << "\n" ;
     } 
     else {
         cout << "Error" << endl;
