@@ -1,0 +1,311 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+class Node {
+public:
+    int value;
+    Node* next;
+    Node* prev;
+
+    Node(int value) : value(value), next(nullptr), prev(nullptr) {}
+};
+
+class ILinkedList {
+public:
+    virtual void add(int value) = 0;
+    virtual bool addToIndex(int index, int value) = 0;
+    virtual int get(int index) = 0;
+    virtual bool set(int index, int value) = 0;
+    virtual void clear() = 0;
+    virtual bool isEmpty() = 0;
+    virtual bool remove(int index) = 0;
+    virtual vector<int> sublist(int start, int end) = 0;
+    virtual bool contains(int value) = 0;
+    virtual int getSize() = 0;
+};
+
+class DoublyLinkedList : public ILinkedList {
+private:
+    Node* head;
+    Node* tail;
+    int size;
+
+public:
+    DoublyLinkedList() : head(nullptr), tail(nullptr), size(0) {}
+
+    void add(int value) override {
+        Node* newNode = new Node(value);
+        if (size == 0) {
+            head = newNode;
+            tail = newNode;
+        } else {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
+        }
+        size++;
+    }
+
+    bool addToIndex(int index, int value) {
+        if (index > size || index < 0) {
+            cout << "Error\n";
+            return 0;
+        }
+        Node* newNode = new Node(value);
+        if (index == 0) {
+            if( size == 0 ){
+                head = newNode ;
+                tail = newNode ;
+            }
+            else{
+                head->prev = newNode ;
+                newNode->next = head ;
+                head = newNode ; 
+            }
+        } 
+        else if (index == size) {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
+        } 
+        else {
+            Node* ptr = head;
+            for (int i = 0; i < index; i++) {
+                ptr = ptr->next;
+            }
+            newNode->next = ptr;
+            newNode->prev = ptr->prev;
+            ptr->prev->next = newNode;
+            ptr->prev = newNode;
+        }
+        size++;
+        return 1;
+    }
+
+    int get(int index) override {
+        if (index < 0 || index >= size) {
+            cout << "Error\n";
+            return INT_MIN;
+        }
+        Node* ptr = head;
+        for (int i = 0; i < index; i++) {
+            ptr = ptr->next;
+        }
+        return ptr->value;
+    }
+
+    bool set(int index, int value) override {
+        if (index < 0 || index >= size) {
+            cout << "Error\n";
+            return 0;
+        }
+        Node* ptr = head;
+        for (int i = 0; i < index; i++) {
+            ptr = ptr->next;
+        }
+        ptr->value = value;
+        return 1;
+    }
+
+    void clear() override {
+        Node* temp;
+        while (head) {
+            temp = head;
+            head = head->next;
+            delete temp;
+        }
+        tail = nullptr;
+        size = 0;
+    }
+
+    bool isEmpty() override {
+        return size == 0;
+    }
+
+    bool remove(int index) override {
+        if (index < 0 || index >= size) {
+            cout << "Error\n";
+            return 0;
+        }
+        Node* ptr = head;
+        if (index == 0) {
+            if( size == 1 ){
+                delete head ;
+                head = nullptr ;
+                tail = nullptr ;
+            }
+            else{
+                head = head->next ;
+                delete head->prev ;
+                head->prev = nullptr ;
+            }
+        } 
+        else if (index == size - 1) {
+            ptr = tail;
+            tail = tail->prev;
+            tail->next = nullptr;
+        } 
+        else {
+            for (int i = 0; i < index; i++) {
+                ptr = ptr->next;
+            }
+            ptr->prev->next = ptr->next;
+            ptr->next->prev = ptr->prev;
+        }
+        delete ptr;
+        size--;
+        return 1;
+    }
+
+    vector<int> sublist(int fromIndex, int toIndex) override {
+        vector<int> sub_l;
+        if (fromIndex > toIndex || fromIndex < 0 || toIndex >= size) {
+            cout << "Error\n";
+            return {INT_MIN};
+        }
+        Node* ptr = head;
+        for (int i = 0; i < fromIndex; i++) {
+            ptr = ptr->next;
+        }
+        for (int i = fromIndex; i <= toIndex; i++) {
+            sub_l.push_back(ptr->value);
+            ptr = ptr->next;
+        }
+        return sub_l;
+    }
+
+    bool contains(int value) override {
+        Node* ptr = head;
+        while (ptr != nullptr) {
+            if (ptr->value == value) {
+                return true;
+            }
+            ptr = ptr->next;
+        }
+        return false;
+    }
+
+    int getSize() override {
+        return size;
+    }
+
+    ~DoublyLinkedList() {
+        clear();
+    }
+
+    void printList() {
+        Node* ptr = head;
+        cout << "[";
+        while (ptr != nullptr) {
+            cout << ptr->value;
+            ptr = ptr->next;
+            if (ptr != nullptr) {
+                cout << ", ";
+            }
+        }
+        cout << "]\n";
+    }
+};
+
+void parseStringTOList( string str_list , DoublyLinkedList& list ){
+    str_list = str_list.substr( 1 , str_list.size() - 2 ) ;
+    string cur_num = "" ; 
+    bool not_empty = 0 ;
+    for( char ch : str_list ){
+        if( isdigit(ch) ){
+            cur_num += ch ;
+            not_empty = 1 ;
+        }
+        else if ( ch == ',' ){
+            list.add( stoi( cur_num ) ) ;
+            cur_num = "" ;
+        }
+    }
+    if( not_empty )
+        list.add(stoi(cur_num)) ;
+}
+
+void control_command( string operation , DoublyLinkedList& list ){
+    if (operation == "add") {
+        int value;
+        cin >> value;
+        list.add(value);
+        list.printList();
+    }
+    else if (operation == "addToIndex") {
+        int index, value;
+        cin >> index >> value;
+        if ( list.addToIndex(index, value) ) 
+            list.printList();
+    } 
+    else if (operation == "get") {
+        int index;
+        cin >> index;
+        int num = list.get(index) ;
+        if( num != INT_MIN )
+        cout << num << endl;
+    } 
+    else if (operation == "set") {
+        int index, value;
+        cin >> index >> value;
+        if( list.set(index, value) )
+            list.printList();
+    } 
+    else if (operation == "clear") {
+        list.clear();
+        list.printList();
+    } 
+    else if (operation == "isEmpty") {
+        cout << (list.isEmpty() ? "True" : "False") << endl;
+    } 
+    else if (operation == "remove") {
+        int index; 
+        cin >> index;
+        if(list.remove(index))
+            list.printList();
+    } 
+    else if (operation == "sublist") {
+        int start, end;
+        cin >> start >> end;
+        vector<int> subList = list.sublist(start, end);
+        if( subList.size() && subList[0] != INT_MIN ){
+        cout << "[";
+        for (auto i = 0; i < subList.size(); i++) {
+            cout << subList[i];
+            if (i != subList.size() - 1) {
+                cout << ", ";
+            }
+        }
+        cout << "]" << endl;
+        }
+        else if( subList.empty() ){
+            cout << "[]" ;
+        }
+    } 
+    else if (operation == "contains") {
+        int value;
+        cin >> value;
+        cout << (list.contains(value) ? "True" : "False") << endl;
+    } 
+    else if (operation == "size") {
+        cout << list.getSize() << endl;
+    } 
+    else {
+        cout << "Error" << endl;
+    }
+}
+
+int main() {
+
+string list_string;
+getline(cin, list_string);
+
+DoublyLinkedList list ;
+parseStringTOList( list_string , list ) ; 
+
+string operation;
+cin >> operation;
+control_command( operation , list );
+
+return 0;
+}
