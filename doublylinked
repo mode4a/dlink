@@ -1,6 +1,14 @@
 #include<bits/stdc++.h>
 using namespace std;
 
+string intToString(int num) {
+    if (num < 0) {
+        string str = to_string(-num);
+        return "-" + str;
+    } else {
+        return to_string(num);
+    }
+}
 class Node {
 public:
     int value;
@@ -25,12 +33,11 @@ public:
 };
 
 class DoublyLinkedList : public ILinkedList {
-private:
+
+public:
     Node* head;
     Node* tail;
     int size;
-
-public:
     DoublyLinkedList() : head(nullptr), tail(nullptr), size(0) {}
 
     void add(int value) override {
@@ -139,6 +146,7 @@ public:
                 delete head->prev ;
                 head->prev = nullptr ;
             }
+            return 1 ;
         } 
         else if (index == size - 1) {
             ptr = tail;
@@ -207,105 +215,153 @@ public:
     }
 };
 
-void parseStringTOList( string str_list , DoublyLinkedList& list ){
-    str_list = str_list.substr( 1 , str_list.size() - 2 ) ;
-    string cur_num = "" ; 
-    bool not_empty = 0 ;
-    for( char ch : str_list ){
-        if( isdigit(ch) ){
-            cur_num += ch ;
-            not_empty = 1 ;
+class polynomial{
+public:
+    DoublyLinkedList list ;
+    string printPoly(){
+        Node* ptr = list.head ;
+        string poly = "" ;
+        int power = list.getSize() - 1 ;
+        for( int i = power ; i >= 0 ; --i ){
+            if( i != power ){
+                poly += ( ptr->value >= 0 ? "+" : "-" ) ;
+            }
+            else{
+                poly += ( ptr->value >= 0 ? "" : "-" ) ;
+            }
+            if( i > 1 ){
+                poly += to_string(abs(ptr->value)) + "x^" + to_string(i) ;
+            }
+            else if (i == 1){
+                poly += to_string( abs(ptr->value) ) + "x" ;
+            }
+            else{
+                poly += to_string(abs(ptr->value)) ;
+            }
+            ptr = ptr->next ;
         }
-        else if ( ch == ',' ){
-            list.add( stoi( cur_num ) ) ;
-            cur_num = "" ;
-        }
+        return poly ;
     }
-    if( not_empty )
-        list.add(stoi(cur_num)) ;
-}
-
-void control_command( string operation , DoublyLinkedList& list ){
-    if (operation == "add") {
-        int value;
-        cin >> value;
-        list.add(value);
-        list.printList();
-    }
-    else if (operation == "addToIndex") {
-        int index, value;
-        cin >> index >> value;
-        if ( list.addToIndex(index, value) ) 
-            list.printList();
-    } 
-    else if (operation == "get") {
-        int index;
-        cin >> index;
-        int num = list.get(index) ;
-        if( num != INT_MIN )
-        cout << num << endl;
-    } 
-    else if (operation == "set") {
-        int index, value;
-        cin >> index >> value;
-        if( list.set(index, value) )
-            list.printList();
-    } 
-    else if (operation == "clear") {
-        list.clear();
-        list.printList();
-    } 
-    else if (operation == "isEmpty") {
-        cout << (list.isEmpty() ? "True" : "False") << endl;
-    } 
-    else if (operation == "remove") {
-        int index; 
-        cin >> index;
-        if(list.remove(index))
-            list.printList();
-    } 
-    else if (operation == "sublist") {
-        int start, end;
-        cin >> start >> end;
-        vector<int> subList = list.sublist(start, end);
-        if( subList.size() && subList[0] != INT_MIN ){
-        cout << "[";
-        for (auto i = 0; i < subList.size(); i++) {
-            cout << subList[i];
-            if (i != subList.size() - 1) {
-                cout << ", ";
+    void setPoly( string str_list ){
+        list.clear() ;
+        str_list = str_list.substr( 1 , str_list.size() - 2 ) ;
+        string cur_num = "" ; 
+        bool not_empty = 0 , negative = 0 ;
+        for( char ch : str_list ){
+            if( isdigit(ch) ){
+                cur_num += ch ;
+                not_empty = 1 ;
+            }
+            else if ( ch == ',' ){
+                if( !negative )
+                    list.addToIndex( 0 , stoi( cur_num ) ) ;
+                else{
+                    list.addToIndex( 0 , -stoi( cur_num ) ) ;
+                }
+                cur_num = "" ;
+                negative = 0 ;
+            }
+            else if( ch == '-' && cur_num == "" ){
+                negative = 1 ;
             }
         }
-        cout << "]" << endl;
-        }
-        else if( subList.empty() ){
-            cout << "[]" ;
-        }
-    } 
-    else if (operation == "contains") {
-        int value;
-        cin >> value;
-        cout << (list.contains(value) ? "True" : "False") << endl;
-    } 
-    else if (operation == "size") {
-        cout << list.getSize() << endl;
-    } 
-    else {
-        cout << "Error" << endl;
+        if( not_empty )
+            list.addToIndex( 0 , stoi(cur_num)) ;
     }
-}
+    float evaluate( float val ){
+        float res = 0 ;
+        Node* ptr = list.head ;
+        int cnt = 0 ; 
+        while( ptr ){
+            res += pow( val , cnt ) * ptr->value ;
+            ptr = ptr->next ;
+            cnt++ ;
+        }
+        return res ;
+    }
+    void add(int value){
+        return list.add(value) ;
+    }
+    bool addToIndex(int index, int value){
+        return list.addToIndex(index,value) ;
+    }
+    int get(int index){
+        return list.get(index) ;
+    }
+    bool set(int index, int value){
+        return list.set(index,value) ;
+    }
+    void clear(){
+        list.clear() ;
+    }
+    bool isEmpty(){
+        return list.isEmpty() ;
+    }
+    bool remove(int index){
+        return list.remove(index) ;
+    }
+    int getSize(){
+        return list.getSize() ;
+    }
 
-int main() {
+}; 
 
-string list_string;
-getline(cin, list_string);
+class PloynomialSolver {
+private: 
+    polynomial A ;
+    polynomial B ;
+    polynomial C ;
+    polynomial R ;
+public:
+    void setPolynomial(char poly, string str_list ){
+        if( poly == 'A' ){
+            A.setPoly(str_list);
+        }
+        else if( poly == 'B' ){
+            B.setPoly(str_list);
+        }
+        else{
+            C.setPoly(str_list);
+        }
+    }
+    string print(char poly){
+        if( poly == 'A' ){
+            cout << A.printPoly() << endl ;
+        }
+        else if( poly == 'B' ){
+            cout << B.printPoly() << endl ;
+        }
+        else{
+            cout << C.printPoly() << endl ;
+        }
+    }
+    void clearPolynomial(char poly){
+        if( poly == 'A' ){
+            A.clear() ;
+        }
+        else if( poly == 'B' ){
+            B.clear() ;
+        }
+        else{
+            C.clear() ;
+        }
+    }
+    float evaluatePolynomial(char poly, float value){
+        if( poly == 'A' ){
+            cout << A.evaluate(value) << endl  ;
+        }
+        else if( poly == 'B' ){
+            cout << B.evaluate(value) << endl  ;
+        }
+        else{
+            cout << C.evaluate(value) << endl  ;
+        }
+    }
+};
 
-DoublyLinkedList list ;
-parseStringTOList( list_string , list ) ; 
-
-string operation;
-cin >> operation;
-control_command( operation , list );
-
-return 0;
+int main(){
+    polynomial pol ; 
+    pol.setPoly( "[1,-3,2]" ) ;
+    cout << pol.printPoly() <<"\n" ;
+    cout << pol.evaluate( 4.0 ) ;
 }
