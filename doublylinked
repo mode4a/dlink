@@ -217,12 +217,15 @@ public:
 
 class polynomial{
 public:
+
     DoublyLinkedList list ;
+
     string printPoly(){
-        Node* ptr = list.head ;
+        Node* ptr = list.tail ;
         string poly = "" ;
         int power = list.getSize() - 1 ;
         for( int i = power ; i >= 0 ; --i ){
+            if( ptr && ptr->value ){
             if( i != power ){
                 poly += ( ptr->value >= 0 ? "+" : "-" ) ;
             }
@@ -230,15 +233,22 @@ public:
                 poly += ( ptr->value >= 0 ? "" : "-" ) ;
             }
             if( i > 1 ){
+                if( ptr->value == -1 || ptr->value == 1 )
+                poly += "x^" + to_string(i) ;
+                else
                 poly += to_string(abs(ptr->value)) + "x^" + to_string(i) ;
             }
             else if (i == 1){
+                if( ptr->value == 1 || ptr->value == -1 )
+                poly +=  "x"  ;
+                else
                 poly += to_string( abs(ptr->value) ) + "x" ;
             }
             else{
                 poly += to_string(abs(ptr->value)) ;
             }
-            ptr = ptr->next ;
+            }
+            ptr = ptr->prev ;
         }
         return poly ;
     }
@@ -265,8 +275,12 @@ public:
                 negative = 1 ;
             }
         }
-        if( not_empty )
-            list.addToIndex( 0 , stoi(cur_num)) ;
+        if( not_empty ){
+            if( !negative )
+                list.addToIndex( 0 , stoi( cur_num ) ) ;
+            else
+                list.addToIndex( 0 , -stoi( cur_num ) ) ;
+        }
     }
     float evaluate( float val ){
         float res = 0 ;
@@ -279,6 +293,53 @@ public:
         }
         return res ;
     }
+    polynomial add( polynomial& poly2 ){
+        polynomial res ;
+        int sz1 = list.size , sz2 = poly2.getSize() ;
+        int small = min( sz1 , sz2 ) , big = max( sz1 , sz2 ) ;
+        Node* ptr1 = list.head , *ptr2 = poly2.list.head ;
+        while( small-- ){
+            res.add( ptr1->value + ptr2->value ) ;
+            ptr1 = ptr1->next ;
+            ptr2 = ptr2->next ;
+        }
+        if( sz1 == big ){
+            while( ptr1 ){
+            res.add( ptr1->value ) ;
+            ptr1 = ptr1->next ;
+            }
+        } else{
+            while( ptr2 ){
+            res.add( ptr2->value ) ;
+            ptr2 = ptr2->next ;
+        }
+    }
+        return res ;
+    }
+    polynomial sub( polynomial& poly2 ){
+        polynomial res ;
+        int sz1 = list.size , sz2 = poly2.getSize() ;
+        int small = min( sz1 , sz2 ) , big = max( sz1 , sz2 ) ;
+        Node* ptr1 = list.head , *ptr2 = poly2.list.head ;
+        while( small-- ){
+            res.add( ptr1->value - ptr2->value ) ;
+            ptr1 = ptr1->next ;
+            ptr2 = ptr2->next ;
+        }
+        if( sz1 == big ){
+            while( ptr1 ){
+            res.add( ptr1->value ) ;
+            ptr1 = ptr1->next ;
+            }
+        } else{
+            while( ptr2 ){
+            res.add( -ptr2->value ) ;
+            ptr2 = ptr2->next ;
+        }
+    }
+        return res ;
+    }
+    
     void add(int value){
         return list.add(value) ;
     }
@@ -300,6 +361,12 @@ public:
     bool remove(int index){
         return list.remove(index) ;
     }
+    vector<int> sublist(int start, int end){
+        return list.sublist(start,end) ;
+    }
+    bool contains(int value){
+        return list.contains(value) ;
+    }
     int getSize(){
         return list.getSize() ;
     }
@@ -308,60 +375,85 @@ public:
 
 class PloynomialSolver {
 private: 
-    polynomial A ;
-    polynomial B ;
-    polynomial C ;
-    polynomial R ;
+    map<char, polynomial> mypolynomials = {
+        {'A', polynomial() },
+        {'B', polynomial() },
+        {'C', polynomial() },
+        {'R', polynomial() }
+    };
 public:
     void setPolynomial(char poly, string str_list ){
-        if( poly == 'A' ){
-            A.setPoly(str_list);
-        }
-        else if( poly == 'B' ){
-            B.setPoly(str_list);
-        }
-        else{
-            C.setPoly(str_list);
-        }
+        mypolynomials[poly].setPoly(str_list) ;
     }
     string print(char poly){
-        if( poly == 'A' ){
-            cout << A.printPoly() << endl ;
-        }
-        else if( poly == 'B' ){
-            cout << B.printPoly() << endl ;
-        }
-        else{
-            cout << C.printPoly() << endl ;
-        }
+        return mypolynomials[poly].printPoly() ;
     }
     void clearPolynomial(char poly){
-        if( poly == 'A' ){
-            A.clear() ;
-        }
-        else if( poly == 'B' ){
-            B.clear() ;
-        }
-        else{
-            C.clear() ;
-        }
+        mypolynomials[poly].clear() ;
     }
     float evaluatePolynomial(char poly, float value){
-        if( poly == 'A' ){
-            cout << A.evaluate(value) << endl  ;
-        }
-        else if( poly == 'B' ){
-            cout << B.evaluate(value) << endl  ;
-        }
-        else{
-            cout << C.evaluate(value) << endl  ;
-        }
+        return mypolynomials[poly].evaluate(value) ;
+    }
+    polynomial add(char poly1, char poly2){
+        mypolynomials['R'] = mypolynomials[poly1].add( mypolynomials[poly2]) ;
+        return mypolynomials['R'] ;
+    }
+    polynomial subtract(char poly1, char poly2){
+        mypolynomials['R'] = mypolynomials[poly1].sub( mypolynomials[poly2]) ;
+        return mypolynomials['R'] ;
     }
 };
 
+void control_command( string operation , PloynomialSolver& pol1 ){
+    if (operation == "set") {
+        char poly ;
+        cin >> poly ;
+        string str_list ;
+        cin >> str_list ;
+        pol1.setPolynomial(poly , str_list) ;
+    }
+    else if (operation == "print") {
+        char poly ;
+        cin >> poly ;
+        cout << pol1.print(poly) << "\n" ;
+    } 
+    else if (operation == "clear") {
+        char poly ;
+        cin >> poly ;
+        pol1.clearPolynomial(poly) ;
+        cout <<"[]" ;
+    } 
+    else if (operation == "eval") {
+        char poly ;
+        cin >> poly ;
+        float val ;
+        cin >> val ;
+        cout << pol1.evaluatePolynomial(poly ,val) << "\n" ;
+    } 
+    else if (operation == "add") {
+        char poly1 , poly2 ;
+        cin >> poly1 ;
+        cin >> poly2 ;
+        cout << poly1 << " " << poly2 ;
+        cout << pol1.add(poly1 , poly2).printPoly() << "\n" ;
+    } 
+    else if (operation == "sub") {
+        char poly1 , poly2 ;
+        cin >> poly1 ;
+        cin >> poly2 ;
+        cout << pol1.subtract(poly1 , poly2).printPoly() << "\n" ;
+    } 
+    else if (operation == "mult") {
+    } 
+    else {
+        cout << "Error" << endl;
+    }
+}
+
 int main(){
-    polynomial pol ; 
-    pol.setPoly( "[1,-3,2]" ) ;
-    cout << pol.printPoly() <<"\n" ;
-    cout << pol.evaluate( 4.0 ) ;
+PloynomialSolver pol1 ;
+string command;
+while(cin >> command)
+    control_command( command , pol1 );
+
 }
